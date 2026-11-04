@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Chapter 2 — Search Algorithms Quiz</title>
+<style>
+:root{
+  --bg:#111827;--surface:#1f2937;--surface2:#374151;
+  --gold:#f59e0b;--gold2:#fbbf24;--teal:#14b8a6;--red:#ef4444;
+  --green:#22c55e;--text:#f9fafb;--muted:#9ca3af;--border:#374151;
+  --radius:14px;
+  --fs-body:1.12rem;--fs-sm:.9rem;--fs-lg:1.25rem;--fs-xl:1.5rem;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{
+  font-family:'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);
+  font-size:var(--fs-body);
+  user-select:none;-webkit-user-select:none;
+}
+
+/* ========== UTILITY ========== */
+.hidden{display:none!important;}
+
+/* ========== SCREEN SYSTEM ========== */
+.screen{
+  position:fixed;inset:0;display:none;
+  align-items:center;justify-content:center;
+  overflow-y:auto;padding:24px;
+}
+.screen.active{display:flex;}
+
+/* ============================================================
+   LOGIN SCREEN
+============================================================ */
+#loginScreen{background:var(--bg);}
+.login-wrap{
+  width:100%;max-width:560px;
+  display:flex;flex-direction:column;gap:24px;
+}
+.login-header{text-align:center;}
+.login-header .badge{
+  display:inline-block;
+  background:rgba(245,158,11,.12);border:1.5px solid var(--gold);
+  color:var(--gold);border-radius:99px;
+  padding:6px 20px;font-size:.82rem;font-weight:700;
+  letter-spacing:1px;text-transform:uppercase;margin-bottom:20px;
+}
+.login-header h1{
+  font-size:clamp(1.6rem,4vw,2.1rem);font-weight:800;
+  color:var(--text);line-height:1.25;margin-bottom:10px;
+}
+.login-header p{color:var(--muted);font-size:.97rem;line-height:1.6;}
+
+.rules-card{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--radius);padding:22px 24px;
+}
+.rules-card h3{
+  font-size:1rem;font-weight:700;color:var(--gold);
+  display:flex;align-items:center;gap:8px;margin-bottom:14px;
+}
+.rules-card ul{list-style:none;display:flex;flex-direction:column;gap:10px;}
+.rules-card li{
+  display:flex;align-items:flex-start;gap:10px;
+  font-size:.95rem;color:var(--muted);line-height:1.55;
+}
+.rules-card li .icon{
+  min-width:22px;height:22px;background:rgba(245,158,11,.15);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;margin-top:1px;flex-shrink:0;
+}
+.rules-card li strong{color:var(--text);}
+
+.name-section label{
+  display:block;font-size:.88rem;font-weight:600;
+  color:var(--muted);margin-bottom:10px;letter-spacing:.4px;
+}
+.name-input{
+  width:100%;padding:15px 18px;
+  background:var(--surface);border:2px solid var(--border);
+  border-radius:var(--radius);color:var(--text);
+  font-size:var(--fs-lg);outline:none;transition:border-color .25s,box-shadow .25s;
+}
+.name-input::placeholder{color:var(--muted);}
+.name-input:focus{border-color:var(--gold);box-shadow:0 0 0 4px rgba(245,158,11,.12);}
+.name-input.error{border-color:var(--red);box-shadow:0 0 0 4px rgba(239,68,68,.12);}
+
+.start-btn{
+  width:100%;padding:17px;
+  background:linear-gradient(135deg,var(--gold),#d97706);
+  border:none;border-radius:var(--radius);
+  color:#111827;font-size:var(--fs-lg);font-weight:800;
+  cursor:pointer;letter-spacing:.5px;
+  transition:opacity .2s,transform .1s,box-shadow .2s;
+  box-shadow:0 6px 24px rgba(245,158,11,.3);
+}
+.start-btn:hover{opacity:.92;box-shadow:0 8px 30px rgba(245,158,11,.4);}
+.start-btn:active{transform:scale(.98);}
+
+/* ============================================================
+   QUIZ SCREEN
+============================================================ */
+#quizScreen{
+  background:var(--bg);
+  display:none;flex-direction:column;
+  align-items:stretch;justify-content:flex-start;
+  padding:0;overflow:hidden;
+}
+#quizScreen.active{display:flex;}
+
+/* Header */
+.quiz-header{
+  background:var(--surface);border-bottom:1.5px solid var(--border);
+  padding:13px 20px;display:flex;align-items:center;gap:14px;
+  flex-shrink:0;
+}
+.hdr-left{flex:1;display:flex;align-items:center;gap:10px;min-width:0;}
+.q-label{font-size:.82rem;color:var(--muted);white-space:nowrap;font-weight:600;}
+.prog-bar{flex:1;height:7px;background:var(--surface2);border-radius:99px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--teal));border-radius:99px;transition:width .4s;}
+.hdr-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.timer-chip{
+  background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:8px;padding:7px 13px;
+  font-size:.95rem;font-weight:800;color:var(--gold);
+  font-variant-numeric:tabular-nums;letter-spacing:.5px;
+}
+.timer-chip.warn{color:var(--red);border-color:var(--red);animation:blink .7s infinite;}
+.violation-chip{
+  background:rgba(239,68,68,.1);border:1.5px solid rgba(239,68,68,.3);
+  border-radius:8px;padding:6px 11px;
+  font-size:.8rem;font-weight:700;color:var(--red);white-space:nowrap;
+}
+
+/* Body */
+.quiz-body{
+  flex:1;overflow-y:auto;
+  padding:24px 20px;
+  max-width:840px;width:100%;margin:0 auto;
+  display:flex;flex-direction:column;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* Question card */
+.q-chip{
+  display:inline-block;padding:5px 14px;border-radius:99px;
+  font-size:.75rem;font-weight:700;letter-spacing:.8px;
+  text-transform:uppercase;margin-bottom:12px;
+}
+.q-chip.mcq{background:rgba(20,184,166,.12);color:var(--teal);border:1px solid rgba(20,184,166,.3);}
+.q-chip.match{background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.3);}
+.q-chip.tf{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.3);}
+
+.q-meta{font-size:.85rem;color:var(--muted);margin-bottom:10px;font-weight:600;}
+.q-text{
+  font-size:var(--fs-lg);font-weight:600;
+  line-height:1.7;color:var(--text);
+  margin-bottom:26px;
+}
+
+/* Options */
+.opts{display:flex;flex-direction:column;gap:12px;}
+.opt{
+  width:100%;background:var(--surface);border:2px solid var(--border);
+  border-radius:12px;padding:16px 18px;
+  text-align:left;color:var(--text);
+  font-size:1.05rem;line-height:1.55;
+  cursor:pointer;transition:all .18s;
+  display:flex;align-items:flex-start;gap:13px;
+}
+.opt:hover:not(:disabled){border-color:var(--gold);background:rgba(245,158,11,.05);}
+.opt .lbl{
+  min-width:30px;height:30px;background:var(--surface2);
+  border-radius:7px;display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:.82rem;color:var(--muted);
+  border:1.5px solid var(--border);flex-shrink:0;
+}
+.opt.chosen{border-color:var(--gold);background:rgba(245,158,11,.08);}
+.opt.chosen .lbl{background:var(--gold);color:#111;border-color:var(--gold);}
+.opt.correct{border-color:var(--green);background:rgba(34,197,94,.08);}
+.opt.correct .lbl{background:var(--green);color:#111;border-color:var(--green);}
+.opt.wrong{border-color:var(--red);background:rgba(239,68,68,.08);}
+.opt.wrong .lbl{background:var(--red);color:#fff;border-color:var(--red);}
+.opt:disabled{cursor:default;}
+
+/* Nav */
+.nav-row{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:30px;gap:12px;padding-bottom:12px;
+}
+.nav-btn{
+  padding:13px 28px;border-radius:10px;border:none;
+  font-size:1rem;font-weight:700;cursor:pointer;transition:all .18s;
+}
+.nav-btn.prev{background:var(--surface);color:var(--text);border:1.5px solid var(--border);}
+.nav-btn.prev:hover{border-color:var(--gold);}
+.nav-btn.next{background:linear-gradient(135deg,var(--teal),#0d9488);color:#fff;}
+.nav-btn.submit{background:linear-gradient(135deg,var(--green),#16a34a);color:#fff;}
+.nav-btn:hover:not(:disabled){opacity:.88;transform:translateY(-1px);}
+.nav-btn:disabled{opacity:.3;cursor:default;transform:none;}
+
+/* ============================================================
+   RESULT SCREEN
+============================================================ */
+#resultScreen{background:var(--bg);}
+.result-wrap{width:100%;max-width:580px;}
+.result-card{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:20px;padding:36px;text-align:center;
+}
+.result-title{font-size:var(--fs-xl);font-weight:800;margin-bottom:6px;}
+.result-sub{color:var(--muted);font-size:.95rem;margin-bottom:28px;}
+
+.score-donut{position:relative;width:170px;height:170px;margin:0 auto 28px;}
+.score-donut svg{transform:rotate(-90deg);}
+.score-inner{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.score-num{font-size:2.5rem;font-weight:900;line-height:1;}
+.score-lbl{font-size:.75rem;color:var(--muted);margin-top:4px;}
+
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px;}
+.stat-box{
+  background:var(--surface2);border-radius:10px;
+  padding:14px;border:1.5px solid var(--border);
+}
+.stat-box .sv{font-size:1.45rem;font-weight:800;}
+.stat-box .sk{font-size:.75rem;color:var(--muted);margin-top:4px;}
+
+.penalty-info{
+  background:rgba(239,68,68,.07);border:1.5px solid rgba(239,68,68,.2);
+  border-radius:10px;padding:14px 16px;
+  text-align:left;font-size:.87rem;color:var(--muted);
+  line-height:1.65;margin-bottom:20px;
+}
+.penalty-info strong{color:var(--red);}
+
+.topic-row{
+  display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+  margin-bottom:24px;
+}
+.topic-tag{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:99px;padding:5px 14px;
+  font-size:.78rem;color:var(--muted);
+}
+
+.restart-btn{
+  width:100%;padding:15px;
+  background:linear-gradient(135deg,var(--gold),#d97706);
+  border:none;border-radius:var(--radius);
+  color:#111;font-size:1.05rem;font-weight:800;
+  cursor:pointer;box-shadow:0 4px 18px rgba(245,158,11,.25);
+  transition:opacity .2s;
+}
+.restart-btn:hover{opacity:.88;}
+
+/* ============================================================
+   VIOLATION MODAL
+============================================================ */
+#warnModal{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,.88);
+  display:none;align-items:center;justify-content:center;
+  padding:20px;backdrop-filter:blur(10px);
+}
+#warnModal.show{display:flex;}
+.warn-inner{
+  background:#1a0808;border:2.5px solid var(--red);
+  border-radius:18px;padding:38px;max-width:430px;width:100%;
+  text-align:center;animation:quake .35s ease;
+}
+.warn-ico{font-size:3.2rem;margin-bottom:16px;}
+.warn-inner h2{color:var(--red);font-size:1.35rem;margin-bottom:10px;}
+.warn-inner p{color:var(--muted);font-size:.93rem;line-height:1.65;margin-bottom:16px;}
+.warn-count{
+  font-size:1.1rem;font-weight:700;color:var(--gold);margin-bottom:6px;
+}
+.warn-dismiss{
+  display:block;width:100%;padding:13px;
+  background:var(--red);border:none;border-radius:10px;
+  color:#fff;font-size:1rem;font-weight:700;cursor:pointer;
+  margin-top:20px;
+}
+
+/* ============================================================
+   FULLSCREEN PROMPT
+============================================================ */
+#fsPrompt{
+  position:fixed;inset:0;z-index:300;
+  background:rgba(0,0,0,.94);
+  display:none;align-items:center;justify-content:center;
+  padding:20px;
+}
+#fsPrompt.show{display:flex;}
+.fs-inner{
+  background:var(--surface);border:2px solid var(--gold);
+  border-radius:18px;padding:40px;max-width:440px;width:100%;
+  text-align:center;
+}
+.fs-inner h2{font-size:1.3rem;font-weight:800;color:var(--gold);margin-bottom:12px;}
+.fs-inner p{color:var(--muted);font-size:.95rem;line-height:1.7;margin-bottom:24px;}
+.fs-btn{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,var(--gold),#d97706);
+  border:none;border-radius:10px;
+  color:#111;font-size:1.05rem;font-weight:800;cursor:pointer;
+}
+
+/* ============================================================
+   ANIMATIONS
+============================================================ */
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
+@keyframes quake{
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-9px);}
+  40%{transform:translateX(9px);}
+  60%{transform:translateX(-6px);}
+  80%{transform:translateX(6px);}
+}
+@keyframes fadein{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.quiz-body{animation:fadein .28s ease;}
+
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+@media(max-width:540px){
+  .login-wrap{gap:18px;}
+  .q-text{font-size:1.1rem;}
+  .opt{font-size:1rem;padding:14px 14px;}
+  .nav-btn{padding:12px 18px;font-size:.92rem;}
+  .quiz-header{padding:10px 14px;}
+  .quiz-body{padding:18px 14px;}
+  .result-card{padding:26px 18px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     LOGIN SCREEN
+============================================================ -->
+<div id="loginScreen" class="screen active">
+  <div class="login-wrap">
+    <div class="login-header">
+      <div class="badge">🎓 AI Course — Chapter 2</div>
+      <h1>Search Algorithms<br>Knowledge Assessment</h1>
+      <p>BFS · DFS · Best-First Search · Hill-Climbing</p>
+    </div>
+
+    <div class="rules-card">
+      <h3>📋 Exam Regulations</h3>
+      <ul>
+        <li><span class="icon">1</span><span>This exam will run in <strong>fullscreen mode</strong>. Do NOT press Escape, switch tabs, or minimize the window.</span></li>
+        <li><span class="icon">2</span><span>Each detected violation (tab switch, window blur, fullscreen exit) will deduct <strong>10% of your final score</strong>.</span></li>
+        <li><span class="icon">3</span><span>The test contains <strong>40 randomly selected questions</strong> from a pool of 60. You have <strong>50 minutes</strong> to complete it.</span></li>
+        <li><span class="icon">4</span><span>Answers are revealed immediately after each selection. You <strong>cannot change</strong> an answer once submitted.</span></li>
+        <li><span class="icon">5</span><span>The exam covers: <strong>BFS, DFS, Best-First Search, and Hill-Climbing</strong>.</span></li>
+      </ul>
+    </div>
+
+    <div class="name-section">
+      <label for="sName">👤 Enter your full name to begin</label>
+      <input id="sName" class="name-input" type="text" placeholder="Your full name..." autocomplete="off" maxlength="70">
+    </div>
+
+    <button class="start-btn" onclick="startQuiz()">START EXAM →</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     QUIZ SCREEN
+============================================================ -->
+<div id="quizScreen" class="screen">
+  <div class="quiz-header">
+    <div class="hdr-left">
+      <span class="q-label" id="qLabel">Q 1 / 40</span>
+      <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    </div>
+    <div class="hdr-right">
+      <div class="timer-chip" id="timerChip">50:00</div>
+      <div class="violation-chip" id="vioChip">⚠ 0 violations</div>
+    </div>
+  </div>
+  <div class="quiz-body" id="quizBody"></div>
+</div>
+
+<!-- ============================================================
+     RESULT SCREEN
+============================================================ -->
+<div id="resultScreen" class="screen">
+  <div class="result-wrap">
+    <div class="result-card" id="resultCard"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     VIOLATION MODAL
+============================================================ -->
+<div id="warnModal">
+  <div class="warn-inner">
+    <div class="warn-ico">🚨</div>
+    <h2>VIOLATION DETECTED</h2>
+    <p>You exited fullscreen, switched tabs, or left the exam window.<br>This incident has been logged.</p>
+    <div class="warn-count" id="warnCount">Violation #1 — 10% deducted</div>
+    <p style="font-size:.82rem;color:var(--red)">Further violations will continue to reduce your score.</p>
+    <button class="warn-dismiss" onclick="dismissWarn()">ACKNOWLEDGED — RETURN TO EXAM</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     FULLSCREEN PROMPT
+============================================================ -->
+<div id="fsPrompt">
+  <div class="fs-inner">
+    <h2>📺 Fullscreen Required</h2>
+    <p>This exam must run in fullscreen mode to ensure integrity. Click the button below to enter fullscreen and begin your exam.</p>
+    <button class="fs-btn" onclick="doEnterFullscreen()">ENTER FULLSCREEN &amp; START</button>
+  </div>
+</div>
+
+<script>
+// ================================================================
+//  QUESTION BANK — 60 questions
+//  BFS: 18 | DFS: 18 | Best-First: 12 | Hill-Climbing: 12
+// ================================================================
+const BANK = [
+
+// ==================== BFS (18 questions) ====================
+
+{id:1, topic:'BFS', type:'mcq',
+ q:'BFS (Breadth-First Search) uses which data structure for the open list L?',
+ opts:['Stack (LIFO — Last In First Out)','Priority queue sorted by h(u) ascending','Queue (FIFO — First In First Out)','Hash set with O(1) lookup'],
+ ans:2},
+
+{id:2, topic:'BFS', type:'mcq',
+ q:'In BFS, newly generated child nodes are inserted at which position in list L?',
+ opts:['The front (beginning) of L','A position sorted by depth level','A random position in L','The end (back) of L'],
+ ans:3},
+
+{id:3, topic:'BFS', type:'mcq',
+ q:'What does FIFO mean and how does it correctly describe BFS behavior?',
+ opts:['First In First Out — the last node added is expanded first','Last In First Out — the deepest node is expanded next','First In First Out — the node added earliest is expanded first','Last In First Out — all nodes are processed in reverse insertion order'],
+ ans:2},
+
+{id:4, topic:'BFS', type:'mcq',
+ q:'What is the TIME complexity of BFS with branching factor b and solution depth d?',
+ opts:['O(b × d)','O(b^d)','O(d log b)','O(b + d)'],
+ ans:1},
+
+{id:5, topic:'BFS', type:'mcq',
+ q:'What is the SPACE (memory) complexity of BFS?',
+ opts:['O(b × d)','O(d)','O(b^d)','O(b + d)'],
+ ans:2},
+
+{id:6, topic:'BFS', type:'tf',
+ q:'TRUE or FALSE: BFS is COMPLETE — it always finds a solution if one exists in the state space.',
+ opts:['FALSE — BFS may miss solutions when the branching factor is very large','TRUE — BFS explores all nodes level by level and will always find a solution','FALSE — BFS only works correctly on tree-structured state spaces without cycles','TRUE — but only when a depth limit is specified in advance'],
+ ans:1},
+
+{id:7, topic:'BFS', type:'tf',
+ q:'TRUE or FALSE: BFS is OPTIMAL — it always finds the path with the fewest steps to the goal.',
+ opts:['FALSE — BFS finds any path, not necessarily the shortest','FALSE — DFS finds shorter paths than BFS on average','TRUE — BFS explores level by level, so the first goal found is at minimum depth','TRUE — but only when all edge costs are different'],
+ ans:2},
+
+{id:8, topic:'BFS', type:'mcq',
+ q:'For a tree with root A, children B/C/D; B\'s children E/F; C\'s child G — what is the correct BFS traversal order to find G?',
+ opts:['A → B → E → F → C → D → G','A → D → C → G → B → F → E','A → B → C → D → E → F → G','A → E → F → B → G → C → D'],
+ ans:2},
+
+{id:9, topic:'BFS', type:'mcq',
+ q:'In a BFS trace table with columns (u, v, L, father), what does the "father(v)" column record?',
+ opts:['The current node u being expanded in this step','All child nodes v generated from u','The parent node of each generated child v (used for path reconstruction)','The heuristic estimate h(v) of each generated child'],
+ ans:2},
+
+{id:10, topic:'BFS', type:'mcq',
+ q:'With branching factor b = 10 and solution depth d = 12, BFS requires approximately how much memory?',
+ opts:['12 KB','1 GB','10 MB','111 TB'],
+ ans:3},
+
+{id:11, topic:'BFS', type:'mcq',
+ q:'The phrase "BFS exhausts memory before it exhausts time" means:',
+ opts:['BFS spends more time computing heuristics than expanding nodes','BFS must store all O(b^d) nodes at the frontier, causing memory to run out first','BFS revisits states unnecessarily, filling memory with duplicates','BFS loops infinitely without storing nodes, using CPU instead of RAM'],
+ ans:1},
+
+{id:12, topic:'BFS', type:'mcq',
+ q:'BFS guarantees finding the goal state with:',
+ opts:['Maximum number of steps (deepest path)','The best heuristic value h(u)','Minimum number of steps (shallowest depth — shortest path)','Minimum total weighted cost'],
+ ans:2},
+
+{id:13, topic:'BFS', type:'mcq',
+ q:'Which real-world application from the slides uses BFS for social network analysis?',
+ opts:['Solving Sudoku puzzles (Backtracking)','Chess game AI with Minimax evaluation','Friend suggestions and computing connection distance between users','Image recognition using Deep Learning'],
+ ans:2},
+
+{id:14, topic:'BFS', type:'mcq',
+ q:'BFS expands nodes in what specific order?',
+ opts:['Deepest node first (maximum depth level)','Node with smallest heuristic h(u) first','Shallowest node first — ALL nodes at level d before ANY node at level d+1','Node with the highest branching factor first'],
+ ans:2},
+
+{id:15, topic:'BFS', type:'mcq',
+ q:'To avoid repeated (duplicate) states in BFS, the most complete solution is:',
+ opts:['Only avoid regenerating the direct parent node of u','Only avoid regenerating nodes already on the current path to u','Do not add v to L if v has already been visited OR v is already waiting in L','Reset the entire search if any cycle is detected'],
+ ans:2},
+
+{id:16, topic:'BFS', type:'mcq',
+ q:'BFS is said to "explore level by level." This precisely means:',
+ opts:['Nodes are sorted by heuristic value before expansion at each level','The algorithm expands one complete branch before moving to the next branch','Every node at depth d is expanded before expanding any node at depth d+1','Nodes at the same level are expanded in random order'],
+ ans:2},
+
+{id:17, topic:'BFS', type:'mcq',
+ q:'Which comparison about BFS vs DFS memory is CORRECT?',
+ opts:['BFS uses O(b×d); DFS uses O(b^d) — DFS uses more memory','Both BFS and DFS use identical memory O(b^d)','BFS uses O(b^d); DFS uses O(b×d) — BFS uses far more memory','DFS uses O(b^d); BFS uses O(b×d) — DFS uses more memory'],
+ ans:2},
+
+{id:18, topic:'BFS', type:'mcq',
+ q:'In BFS, after expanding node A (generating children B, C, D), and then expanding B (generating E, F), what does list L look like?',
+ opts:['[E, F, B, C, D]','[B, C, D, E, F]','[C, D, E, F]','[E, F, C, D, A]'],
+ ans:2},
+
+// ==================== DFS (18 questions) ====================
+
+{id:19, topic:'DFS', type:'mcq',
+ q:'DFS (Depth-First Search) uses which data structure for the open list L?',
+ opts:['Queue (FIFO — First In First Out)','Priority queue sorted by f(u) ascending','Hash table with direct state lookup','Stack (LIFO — Last In First Out)'],
+ ans:3},
+
+{id:20, topic:'DFS', type:'mcq',
+ q:'In DFS, newly generated child nodes are inserted at which position in list L?',
+ opts:['The end (back) of L','A position sorted by depth level','A position sorted by h(u) value','The front (beginning) of L'],
+ ans:3},
+
+{id:21, topic:'DFS', type:'mcq',
+ q:'What does LIFO mean and how does it correctly describe DFS behavior?',
+ opts:['First In First Out — the earliest-added node is expanded next','Last In First Out — nodes are processed from oldest to newest','First In First Out — nodes at shallow levels are processed first','Last In First Out — the most recently added node (deepest) is expanded first'],
+ ans:3},
+
+{id:22, topic:'DFS', type:'mcq',
+ q:'What is the TIME complexity of DFS?',
+ opts:['O(b × d)','O(b^d)','O(b × m) where m is max depth','O(d log b)'],
+ ans:1},
+
+{id:23, topic:'DFS', type:'mcq',
+ q:'What is the SPACE complexity of DFS with branching factor b and maximum depth m?',
+ opts:['O(b^m)','O(b × m)','O(m)','O(b + m)'],
+ ans:1},
+
+{id:24, topic:'DFS', type:'tf',
+ q:'TRUE or FALSE: DFS is COMPLETE — it always finds a solution if one exists.',
+ opts:['TRUE — DFS explores all branches given enough time','FALSE — DFS can get trapped in an infinitely deep branch and loop forever','TRUE — DFS backtracks automatically, ensuring it covers the whole search space','FALSE — DFS only works in tree-structured spaces with no cycles'],
+ ans:1},
+
+{id:25, topic:'DFS', type:'tf',
+ q:'TRUE or FALSE: DFS is OPTIMAL — it always finds the shortest path to the goal.',
+ opts:['TRUE — DFS explores all paths and then selects the shortest','TRUE — DFS is faster than BFS so its solutions are always shorter','FALSE — the first solution DFS finds is generally NOT the shortest path','FALSE — DFS never finds the goal state in practice'],
+ ans:2},
+
+{id:26, topic:'DFS', type:'mcq',
+ q:'At solution depth d = 12 with branching factor b = 10, DFS uses approximately how much memory?',
+ opts:['111 TB','1 GB','100 MB','12 KB'],
+ ans:3},
+
+{id:27, topic:'DFS', type:'mcq',
+ q:'When DFS reaches a dead-end (leaf node with no successors), it:',
+ opts:['Restarts the entire search from the root node','Switches to BFS mode to explore remaining nodes breadth-first','Backtracks to the parent node and tries the next unexplored sibling branch','Permanently terminates and reports failure immediately'],
+ ans:2},
+
+{id:28, topic:'DFS', type:'mcq',
+ q:'The ONLY algorithmic difference between BFS and DFS (per the pseudocode in the slides) is:',
+ opts:['BFS uses heuristic h(u); DFS does not use any heuristic','BFS explores all nodes; DFS explores only a single path to a leaf','BFS inserts child nodes at the END of L; DFS inserts at the FRONT of L','BFS uses recursion internally; DFS uses an explicit iteration loop'],
+ ans:2},
+
+{id:29, topic:'DFS', type:'mcq',
+ q:'For the tree: A→(B,C,D), B→(E,F), E→(H,I), C→(G) — what is the correct DFS traversal order?',
+ opts:['A → B → C → D → E → F → G → H → I','A → B → E → H → I → F → C → G','A → C → G → B → E → H → I → F','A → D → C → G → B → F → E → H → I'],
+ ans:1},
+
+{id:30, topic:'DFS', type:'mcq',
+ q:'DFS can be faster than BFS in some practical cases because:',
+ opts:['DFS always expands fewer total nodes than BFS in every scenario','DFS uses a better heuristic to eliminate irrelevant branches','DFS may find a solution quickly by exploring only a small portion of the left branch of the tree','DFS has lower worst-case time complexity O(b×d) vs BFS\'s O(b^d)'],
+ ans:2},
+
+{id:31, topic:'DFS', type:'mcq',
+ q:'DFS saves memory compared to BFS because:',
+ opts:['DFS uses a compressed hash table instead of an explicit list','DFS never stores previously visited nodes at all','DFS only stores nodes along the current active branch: O(b×d) vs BFS\'s O(b^d)','DFS automatically compresses state representations to reduce size'],
+ ans:2},
+
+{id:32, topic:'DFS', type:'mcq',
+ q:'A real-world application of DFS (Backtracking) mentioned in the slides is:',
+ opts:['GPS shortest route finding using Google Maps','Social network friend suggestions and distance computation','Solving mazes and Sudoku puzzles using systematic backtracking','Spam email classification using statistical models'],
+ ans:2},
+
+{id:33, topic:'DFS', type:'mcq',
+ q:'"Backtracking" in DFS specifically refers to:',
+ opts:['Restarting the entire search process from the root node','Jumping directly to a neighboring node when the goal is nearby','Returning to the parent node when a dead-end is reached, then trying the next sibling branch','Reversing all operators applied so far to return to the initial state'],
+ ans:2},
+
+{id:34, topic:'DFS', type:'mcq',
+ q:'DFS risks "getting trapped in an infinite branch." This failure occurs when:',
+ opts:['The branching factor b is extremely small (b = 1)','The search descends infinitely deep along one branch without ever finding the goal','The heuristic function h(u) returns a negative value at some state','The goal state has more than one path leading to it'],
+ ans:1},
+
+{id:35, topic:'DFS', type:'mcq',
+ q:'In the DFS trace starting from A with children (B, C, D), after expanding B which generates (E, F), what does L look like?',
+ opts:['[B, C, D, E, F]','[C, D, B, E, F]','[E, F, B, C, D]','[E, F, C, D]'],
+ ans:3},
+
+{id:36, topic:'DFS', type:'match',
+ q:'MATCHING — Which row correctly compares BFS and DFS on all four criteria?',
+ opts:[
+   'BFS: Queue/Complete/Optimal/O(b^d) RAM | DFS: Stack/Complete/Not Optimal/O(b×d) RAM',
+   'BFS: Stack/Not Complete/Optimal/O(b^d) RAM | DFS: Queue/Complete/Not Optimal/O(b×d) RAM',
+   'BFS: Queue/Complete/Optimal/O(b^d) RAM | DFS: Stack/Not Complete/Not Optimal/O(b×d) RAM ✓',
+   'BFS: Queue/Not Complete/Not Optimal/O(b×d) RAM | DFS: Stack/Complete/Optimal/O(b^d) RAM'
+ ],
+ ans:2},
+
+// ==================== BEST-FIRST SEARCH (12 questions) ====================
+
+{id:37, topic:'Best-First', type:'mcq',
+ q:'Best-First Search is best described as:',
+ opts:['DFS guided by heuristic h(u), diving deep into the best child','IDDFS extended with a priority queue for node selection','BFS guided by heuristic h(u), always expanding the most promising node globally','DFS with explicit backtracking and heuristic-based pruning'],
+ ans:2},
+
+{id:38, topic:'Best-First', type:'mcq',
+ q:'In Best-First Search, how is the open list L maintained?',
+ opts:['As a FIFO queue — insertion order determines expansion order','As a LIFO stack — newest nodes are expanded first','As a list sorted in ASCENDING order of h(u) — smallest h(u) at the front','As a list sorted in DESCENDING order of g(u) — highest cost nodes first'],
+ ans:2},
+
+{id:39, topic:'Best-First', type:'mcq',
+ q:'At each step, Best-First Search expands the node with:',
+ opts:['The deepest position in the current search tree','The largest h(u) value across all nodes in L','The smallest g(u) cost from the start state','The smallest h(u) value across ALL nodes in L — the globally most promising node'],
+ ans:3},
+
+{id:40, topic:'Best-First', type:'tf',
+ q:'TRUE or FALSE: Best-First Search is COMPLETE — it will find a solution if one exists.',
+ opts:['FALSE — Best-First always gets trapped at local optima like Hill-Climbing','TRUE — Best-First maintains a global open list and will eventually find a solution if h is consistent','FALSE — Best-First skips entire branches that may contain the goal','TRUE — but only when all h(u) values are exactly zero'],
+ ans:1},
+
+{id:41, topic:'Best-First', type:'mcq',
+ q:'The KEY difference between Best-First Search and standard BFS is:',
+ opts:['Best-First uses a stack (LIFO); BFS uses a queue (FIFO)','Both use the same data structure but differ only in stopping criteria','Best-First uses h(u) to select the GLOBALLY best node from all levels; BFS expands strictly level by level','Best-First always finds shorter paths than BFS on every problem'],
+ ans:2},
+
+{id:42, topic:'Best-First', type:'mcq',
+ q:'In Best-First Search, the node chosen for expansion could be located:',
+ opts:['Only at the current deepest level reached','Only at the shallowest unexpanded level','Only at the level immediately below the current node','At ANY level in the search tree — whichever has the globally smallest h(u)'],
+ ans:3},
+
+{id:43, topic:'Best-First', type:'mcq',
+ q:'The heuristic value h(u) is formally defined as:',
+ opts:['The exact actual cost from the start state s₀ to state u','The estimated cost from state u to the goal state G','The total branching factor at node u','The depth level of node u in the search tree'],
+ ans:1},
+
+{id:44, topic:'Best-First', type:'mcq',
+ q:'The condition h(G) = 0 (where G is the goal state) means:',
+ opts:['The goal state is unreachable from the start state','The heuristic function is inadmissible at the goal state','The estimated cost from the goal to itself is zero — this is required and correct','The search algorithm must restart when reaching G'],
+ ans:2},
+
+{id:45, topic:'Best-First', type:'mcq',
+ q:'A SMALLER h(u) value indicates:',
+ opts:['State u is farther from the goal and should be expanded later','State u has more child nodes to explore','State u is estimated to be CLOSER to the goal and should be expanded sooner','State u was generated earlier and has waited longer in L'],
+ ans:2},
+
+{id:46, topic:'Best-First', type:'mcq',
+ q:'For the map routing problem, the heuristic h(u) used in the slides is:',
+ opts:['Number of road intersections between city u and the destination','Straight-line (as-the-crow-flies) distance from city u to the destination','Average historical travel time from city u to the destination','Number of alternative routes available from city u'],
+ ans:1},
+
+{id:47, topic:'Best-First', type:'mcq',
+ q:'For the 8-Puzzle problem, heuristic h₁(u) is defined as:',
+ opts:['Total Manhattan distance of all tiles from their correct goal positions','Number of moves already made from the initial state','Number of tiles currently placed in WRONG positions compared to the goal','Number of valid moves (operators) available from state u'],
+ ans:2},
+
+{id:48, topic:'Best-First', type:'mcq',
+ q:'For the 8-Puzzle, why is h₂ (Manhattan distance) considered BETTER than h₁ (misplaced tiles)?',
+ opts:['h₂ is computationally faster to calculate than h₁','h₂ requires significantly less memory to store than h₁','h₂ gives a larger (tighter) lower bound — it captures MORE information about the true cost','h₂ always equals the exact solution cost, making it a perfect heuristic'],
+ ans:2},
+
+// ==================== HILL-CLIMBING (12 questions) ====================
+
+{id:49, topic:'Hill-Climbing', type:'mcq',
+ q:'Hill-Climbing Search is best described as:',
+ opts:['BFS guided by heuristic h(u), selecting the globally best open node','A* without the g(u) component, using only the heuristic h(u)','DFS guided by heuristic h(u) — always diving into the locally best child node','IDDFS extended with a priority queue and heuristic evaluation'],
+ ans:2},
+
+{id:50, topic:'Hill-Climbing', type:'mcq',
+ q:'In Hill-Climbing, after generating child nodes (L₁) from the current node u, L₁ is processed as follows:',
+ opts:['L₁ is appended to the END of L in queue style (like BFS)','L₁ is inserted at a position based on f(u) = g(u) + h(u)','L₁ is sorted ASCENDING by h(v), then inserted at the FRONT of L (stack style)','L₁ is discarded if no child improves on the parent\'s h(u) value'],
+ ans:2},
+
+{id:51, topic:'Hill-Climbing', type:'tf',
+ q:'TRUE or FALSE: Hill-Climbing Search is COMPLETE — it always finds a solution if one exists.',
+ opts:['TRUE — its heuristic guidance guarantees it will always reach the goal','TRUE — Hill-Climbing automatically backtracks when stuck, ensuring completeness','FALSE — Hill-Climbing can get trapped at local optima and never reach the global goal','FALSE — Hill-Climbing is not a recognized AI search algorithm'],
+ ans:2},
+
+{id:52, topic:'Hill-Climbing', type:'tf',
+ q:'TRUE or FALSE: Hill-Climbing Search is OPTIMAL — it finds the shortest path to the goal.',
+ opts:['TRUE — Hill-Climbing always finds all paths first, then selects the shortest','FALSE — Hill-Climbing greedily follows the locally best path which is generally NOT globally optimal','TRUE — but only when there are no local optima in the search space','FALSE — Hill-Climbing does not find any solution path at all'],
+ ans:1},
+
+{id:53, topic:'Hill-Climbing', type:'mcq',
+ q:'Hill-Climbing\'s main MEMORY advantage over Best-First Search is:',
+ opts:['Hill-Climbing uses a hash table for O(1) state lookup','Hill-Climbing stores only the current branch: O(b×m) vs Best-First\'s O(b^d)','Hill-Climbing compresses state representations using encoding','Hill-Climbing does not maintain any list of states at all'],
+ ans:1},
+
+{id:54, topic:'Hill-Climbing', type:'mcq',
+ q:'At each step, Hill-Climbing expands:',
+ opts:['The globally best node across ALL levels of the search tree','The shallowest unexpanded node in the search tree','The locally best child node of the current node (depth-first greedy choice)','The node with the largest branching factor among all open nodes'],
+ ans:2},
+
+{id:55, topic:'Hill-Climbing', type:'mcq',
+ q:'Hill-Climbing differs from Best-First Search primarily in that:',
+ opts:['Hill-Climbing uses h(u); Best-First does not use any heuristic','Both are identical except Best-First adds g(u) to the evaluation','Hill-Climbing makes LOCAL child selections (DFS-style); Best-First selects the GLOBAL best node across all levels','Hill-Climbing is complete; Best-First is not complete'],
+ ans:2},
+
+{id:56, topic:'Hill-Climbing', type:'mcq',
+ q:'"Local optimum" in the context of Hill-Climbing means:',
+ opts:['A state where all applicable operators lead to invalid states','A state where the heuristic h(u) returns a negative value','A state that appears better than ALL its immediate neighbors but is NOT the global best goal','A state at which the search tree has no remaining nodes to expand'],
+ ans:2},
+
+{id:57, topic:'Hill-Climbing', type:'mcq',
+ q:'In the Hill-Climbing example from the slides (path: A → D → I → B), why did the algorithm choose I from D\'s children?',
+ opts:['I was the deepest node reachable from D in the search tree','I had the LARGEST h value among D\'s children','I had the SMALLEST h(u) among D\'s children, making it the locally best choice','I was the first child node generated from D in alphabetical order'],
+ ans:2},
+
+{id:58, topic:'Hill-Climbing', type:'mcq',
+ q:'Hill-Climbing can MISS a better solution in a different branch because:',
+ opts:['It does not maintain any memory of previously visited states','It uses FIFO ordering which prevents deeper exploration','It commits to the deepest locally best path (DFS-style) and does NOT backtrack to explore globally better alternatives at higher levels','It requires h(u) to be admissible, which inherently restricts exploration'],
+ ans:2},
+
+{id:59, topic:'Hill-Climbing', type:'mcq',
+ q:'A practical advantage of Hill-Climbing over Best-First Search in large problems is:',
+ opts:['Hill-Climbing always finds the globally optimal solution','Hill-Climbing is complete and will always find a solution','Hill-Climbing uses far less memory O(b×m), making it feasible for very large state spaces','Hill-Climbing is guaranteed to avoid all local optima through backtracking'],
+ ans:2},
+
+{id:60, topic:'Hill-Climbing', type:'match',
+ q:'MATCHING — Which pair of algorithms are both NOT complete AND NOT optimal?',
+ opts:['BFS and Best-First Search','BFS and Hill-Climbing','DFS and Hill-Climbing — both can get stuck and neither guarantees shortest path','Best-First Search and IDDFS'],
+ ans:2},
+
+];
+
+// ================================================================
+//  STATE
+// ================================================================
+let sName='', selectedQ=[], curIdx=0, answers=[], violations=0;
+let timerID=null, timeLeft=50*60, quizActive=false, vCooldown=false;
+let fsViolationCooldown=false;
+
+const LABELS=['A','B','C','D'];
+
+function shuffle(a){
+  const b=[...a];
+  for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}
+  return b;
+}
+
+// Stratified random selection: 12 BFS + 12 DFS + 8 BF + 8 HC = 40
+function selectQuestions(){
+  const bfs  = shuffle(BANK.filter(q=>q.topic==='BFS')).slice(0,12);
+  const dfs  = shuffle(BANK.filter(q=>q.topic==='DFS')).slice(0,12);
+  const bf   = shuffle(BANK.filter(q=>q.topic==='Best-First')).slice(0,8);
+  const hc   = shuffle(BANK.filter(q=>q.topic==='Hill-Climbing')).slice(0,8);
+  return shuffle([...bfs,...dfs,...bf,...hc]);
+}
+
+// ================================================================
+//  SCREENS
+// ================================================================
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ================================================================
+//  START QUIZ
+// ================================================================
+function startQuiz(){
+  const inp=document.getElementById('sName');
+  sName=inp.value.trim();
+  if(!sName){inp.classList.add('error');inp.focus();setTimeout(()=>inp.classList.remove('error'),1500);return;}
+  selectedQ=selectQuestions();
+  answers=new Array(40).fill(-1);
+  curIdx=0;violations=0;timeLeft=50*60;quizActive=true;
+  showScreen('quizScreen');
+  renderQ();
+  startTimer();
+  updateVioChip();
+  // Request fullscreen
+  const fp=document.getElementById('fsPrompt');
+  fp.classList.add('show');
+}
+
+function doEnterFullscreen(){
+  document.getElementById('fsPrompt').classList.remove('show');
+  enterFS();
+}
+
+// ================================================================
+//  RENDER QUESTION
+// ================================================================
+function renderQ(){
+  const q=selectedQ[curIdx];
+  const done=answers[curIdx]!==-1;
+  const typeMap={mcq:'Multiple Choice',tf:'True / False',match:'Matching'};
+  const cls=q.type==='mcq'?'mcq':q.type==='tf'?'tf':'match';
+  const topicColor=q.topic==='BFS'?'#14b8a6':q.topic==='DFS'?'#f59e0b':q.topic==='Best-First'?'#a78bfa':'#f87171';
+
+  const optsHTML=q.opts.map((o,i)=>{
+    let c='opt';
+    let dis='';
+    if(done){
+      dis='disabled';
+      if(i===q.ans)c+=' correct';
+      else if(i===answers[curIdx])c+=' wrong';
+    }
+    return `<button class="${c}" onclick="pick(${i})" ${dis}>
+      <span class="lbl">${LABELS[i]}</span>
+      <span>${o.replace(/^[ABCD]\)\s*/,'')}</span>
+    </button>`;
+  }).join('');
+
+  const allDone=answers.every(a=>a!==-1);
+  const isLast=curIdx===selectedQ.length-1;
+
+  document.getElementById('quizBody').innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+      <span class="q-chip ${cls}">${typeMap[q.type]}</span>
+      <span style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:99px;padding:4px 12px;font-size:.75rem;color:${topicColor};font-weight:700;">${q.topic}</span>
+    </div>
+    <div class="q-meta">Question ${curIdx+1} of ${selectedQ.length}</div>
+    <div class="q-text">${q.q}</div>
+    <div class="opts">${optsHTML}</div>
+    <div class="nav-row">
+      <button class="nav-btn prev" onclick="prevQ()" ${curIdx===0?'disabled':''}>← Prev</button>
+      <div style="display:flex;gap:10px;">
+        ${allDone?`<button class="nav-btn submit" onclick="submitQuiz()">Submit ✓</button>`:''}
+        <button class="nav-btn next" onclick="nextQ()" ${isLast?'disabled':''}>Next →</button>
+      </div>
+    </div>`;
+
+  document.getElementById('qLabel').textContent=`Q ${curIdx+1} / ${selectedQ.length}`;
+  document.getElementById('progFill').style.width=`${((curIdx+1)/selectedQ.length)*100}%`;
+}
+
+function pick(i){
+  if(answers[curIdx]!==-1)return;
+  answers[curIdx]=i;
+  renderQ();
+}
+function prevQ(){if(curIdx>0){curIdx--;renderQ();}}
+function nextQ(){if(curIdx<selectedQ.length-1){curIdx++;renderQ();}}
+
+// ================================================================
+//  TIMER
+// ================================================================
+function startTimer(){
+  timerID=setInterval(()=>{
+    timeLeft--;
+    const m=String(Math.floor(timeLeft/60)).padStart(2,'0');
+    const s=String(timeLeft%60).padStart(2,'0');
+    const chip=document.getElementById('timerChip');
+    chip.textContent=`${m}:${s}`;
+    chip.className='timer-chip'+(timeLeft<=300?' warn':'');
+    if(timeLeft<=0){clearInterval(timerID);submitQuiz();}
+  },1000);
+}
+
+// ================================================================
+//  SUBMIT
+// ================================================================
+function submitQuiz(){
+  clearInterval(timerID);
+  quizActive=false;
+  let correct=0;
+  selectedQ.forEach((q,i)=>{if(answers[i]===q.ans)correct++;});
+  const raw=Math.round((correct/selectedQ.length)*100);
+  const ded=Math.min(violations*10,100);
+  const final=Math.max(raw-ded,0);
+  showResult(correct,raw,ded,final);
+}
+
+// ================================================================
+//  RESULT
+// ================================================================
+function showResult(correct,raw,ded,final){
+  showScreen('resultScreen');
+  const wrong=selectedQ.length-correct;
+  const grade=final>=90?'🏆 Excellent':final>=75?'🌟 Good':final>=60?'👍 Pass':'❌ Needs Review';
+  const col=final>=75?'#22c55e':final>=60?'#f59e0b':'#ef4444';
+  const R=65,C=2*Math.PI*R;
+  const dash=(final/100)*C;
+  const byTopic={BFS:0,DFS:0,'Best-First':0,'Hill-Climbing':0};
+  const byTopicT={BFS:0,DFS:0,'Best-First':0,'Hill-Climbing':0};
+  selectedQ.forEach((q,i)=>{byTopicT[q.topic]++;if(answers[i]===q.ans)byTopic[q.topic]++;});
+  const topicRows=Object.entries(byTopic).map(([t,c])=>`
+    <span class="topic-tag">${t}: ${c}/${byTopicT[t]}</span>`).join('');
+
+  document.getElementById('resultCard').innerHTML=`
+    <div class="result-title">${grade}</div>
+    <div class="result-sub">👤 ${sName}</div>
+    <div class="score-donut">
+      <svg width="170" height="170" viewBox="0 0 170 170">
+        <circle cx="85" cy="85" r="${R}" fill="none" stroke="#374151" stroke-width="14"/>
+        <circle cx="85" cy="85" r="${R}" fill="none" stroke="${col}" stroke-width="14"
+          stroke-dasharray="${dash.toFixed(1)} ${C.toFixed(1)}" stroke-linecap="round"/>
+      </svg>
+      <div class="score-inner">
+        <div class="score-num" style="color:${col}">${final}</div>
+        <div class="score-lbl">/ 100 points</div>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="sv" style="color:#22c55e">${correct}</div><div class="sk">✓ Correct</div></div>
+      <div class="stat-box"><div class="sv" style="color:#ef4444">${wrong}</div><div class="sk">✗ Wrong</div></div>
+      <div class="stat-box"><div class="sv" style="color:#f59e0b">${raw}%</div><div class="sk">Raw Score</div></div>
+      <div class="stat-box"><div class="sv" style="color:#ef4444">−${ded}%</div><div class="sk">Penalties (${violations} violations)</div></div>
+    </div>
+    ${violations>0?`<div class="penalty-info">
+      <strong>⚠ Violation Log:</strong><br>
+      Detected <strong>${violations}</strong> exit / tab-switch event(s).<br>
+      Total deduction: <strong>${violations} × 10% = ${ded}%</strong><br>
+      Raw score ${raw}% → Final score <strong>${final}%</strong>
+    </div>`:''}
+    <div class="topic-row">${topicRows}</div>
+    <button class="restart-btn" onclick="location.reload()">↺ Retake Quiz</button>`;
+}
+
+// ================================================================
+//  ANTI-CHEAT SYSTEM
+// ================================================================
+function applyPenalty(){
+  if(!quizActive||vCooldown)return;
+  vCooldown=true;
+  violations++;
+  updateVioChip();
+  document.getElementById('warnCount').textContent=
+    `Violation #${violations} — ${violations*10}% deducted from final score`;
+  document.getElementById('warnModal').classList.add('show');
+  setTimeout(()=>{vCooldown=false;},3000);
+}
+
+function dismissWarn(){
+  document.getElementById('warnModal').classList.remove('show');
+  enterFS();
+}
+
+function updateVioChip(){
+  document.getElementById('vioChip').textContent=`⚠ ${violations} violation${violations===1?'':'s'}`;
+}
+
+// Fullscreen helpers
+function enterFS(){
+  const el=document.documentElement;
+  try{
+    if(el.requestFullscreen)el.requestFullscreen();
+    else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();
+    else if(el.mozRequestFullScreen)el.mozRequestFullScreen();
+    else if(el.msRequestFullscreen)el.msRequestFullscreen();
+  }catch(e){}
+}
+
+function isFS(){
+  return !!(document.fullscreenElement||document.webkitFullscreenElement||
+            document.mozFullScreenElement||document.msFullscreenElement);
+}
+
+// Fullscreen change → re-enter + penalty
+function onFSChange(){
+  if(!isFS()&&quizActive){
+    applyPenalty();
+    setTimeout(enterFS,600);
+  }
+}
+document.addEventListener('fullscreenchange',onFSChange);
+document.addEventListener('webkitfullscreenchange',onFSChange);
+document.addEventListener('mozfullscreenchange',onFSChange);
+document.addEventListener('MSFullscreenChange',onFSChange);
+
+// Visibility change (tab switch, phone lock screen, etc.)
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden&&quizActive)applyPenalty();
+});
+
+// Window blur (alt-tab, click outside, etc.)
+window.addEventListener('blur',()=>{
+  if(quizActive&&!isFS())applyPenalty();
+  else if(quizActive&&isFS()){
+    // Could be legitimate focus loss inside FS; still penalize after brief delay
+    setTimeout(()=>{if(quizActive&&document.hidden)applyPenalty();},400);
+  }
+});
+
+// Block keyboard shortcuts
+document.addEventListener('keydown',function(e){
+  // Block ESC (re-enter fullscreen anyway via fullscreenchange)
+  if(e.key==='Escape'){e.preventDefault();e.stopPropagation();}
+  if(!quizActive)return;
+  // Ctrl+W, Ctrl+T, Ctrl+N, Ctrl+R, Ctrl+L, Ctrl+Tab
+  if(e.ctrlKey&&['w','t','n','r','l','u','p'].includes(e.key.toLowerCase())){
+    e.preventDefault();e.stopPropagation();
+  }
+  // F12, F5, F11
+  if(['F12','F5','F11'].includes(e.key)){e.preventDefault();e.stopPropagation();}
+  // Ctrl+Shift+I/J/C/K (DevTools)
+  if(e.ctrlKey&&e.shiftKey&&['i','j','c','k'].includes(e.key.toLowerCase())){
+    e.preventDefault();e.stopPropagation();
+  }
+  // Alt+F4, Alt+Tab
+  if(e.altKey&&(e.key==='F4'||e.key==='Tab')){e.preventDefault();e.stopPropagation();}
+  // Windows key / Meta
+  if(e.metaKey){e.preventDefault();e.stopPropagation();}
+},true);
+
+// Disable right-click
+document.addEventListener('contextmenu',e=>e.preventDefault());
+
+// Prevent copy/paste
+document.addEventListener('copy',e=>{if(quizActive)e.preventDefault();});
+document.addEventListener('cut',e=>{if(quizActive)e.preventDefault();});
+
+// Enter key on login
+document.getElementById('sName').addEventListener('keydown',function(e){
+  if(e.key==='Enter')startQuiz();
+});
+</script>
+</body>
+</html>
